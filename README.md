@@ -19,25 +19,18 @@ Gravador de tela para gameplays no Windows, com áudio do jogo e do microfone, d
 
 ## Instalação
 
-1. Baixe o projeto:
-   - **Com Git:** `git clone https://github.com/eebagabe/windows-rec.git`
-   - **Ou pelo ZIP:** botão verde **Code > Download ZIP**. Antes de extrair, clique com o botão direito no ZIP > **Propriedades** > marque **Desbloquear** > **OK** (assim o Windows não bloqueia os scripts).
-2. Dê dois cliques em **`Instalar.bat`**.
-3. Siga o assistente: escolha a pasta e os atalhos e clique em **Instalar**.
+1. Baixe o **[GameRec-Setup.exe](https://github.com/eebagabe/windows-rec/releases/latest/download/GameRec-Setup.exe)** (página de [releases](https://github.com/eebagabe/windows-rec/releases)).
+2. Abra e siga o assistente: escolha a pasta, se quer atalho na área de trabalho, e clique em **Instalar**.
 
-O assistente baixa e configura tudo sozinho:
-
-| Item | Detalhe |
-| --- | --- |
-| GameRec.exe | O aplicativo. Usa o `GameRec.exe` da pasta do projeto se existir; senão compila com `cargo` (se o Rust estiver instalado) ou baixa da última [release](https://github.com/eebagabe/windows-rec/releases). |
-| FFmpeg | Motor de gravação. O instalador testa versões até achar uma que rode na sua máquina com encoder de GPU. |
-| Atalhos | Área de trabalho e menu Iniciar. |
-
-Precisa de internet (cerca de 200 MB, quase tudo FFmpeg). Não precisa de administrador. Quem tinha a versão em Python instalada pode instalar por cima: a pasta antiga é substituída e as configurações são mantidas.
+O instalador já traz o FFmpeg (não precisa de internet durante a instalação), cria os atalhos e coloca o GameRec em **Configurações > Aplicativos instalados** para desinstalar. Não precisa de administrador. Quem tinha a versão em Python pode instalar por cima: a pasta antiga é substituída e as configurações são mantidas. Para atualizar, rode o instalador da versão nova.
 
 > Se aparecer a tela azul **"O Windows protegeu o computador"**, clique em **Mais informações > Executar assim mesmo**.
 
-### Instalação pelo terminal (sem assistente)
+### Instalação pelo código-fonte
+
+Baixe o projeto (`git clone` ou **Code > Download ZIP**; no ZIP, antes de extrair, clique com o botão direito > **Propriedades** > **Desbloquear**) e dê dois cliques em **`Instalar.bat`**. Esse assistente usa o `GameRec.exe` da pasta do projeto se existir; senão compila com `cargo` (se o Rust estiver instalado) ou baixa da última release. O FFmpeg é baixado na hora, testando versões até achar uma que rode na máquina com encoder de GPU (cerca de 200 MB).
+
+#### Pelo terminal (sem assistente)
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
@@ -72,7 +65,7 @@ No Windows 11 com o **Smart App Control** ligado, o Windows pode bloquear `.exe`
 
 ## Desinstalar
 
-**Configurações > Aplicativos > Aplicativos instalados > GameRec > Desinstalar**, ou dois cliques em `Desinstalar.bat`. Os vídeos gravados são mantidos.
+**Configurações > Aplicativos > Aplicativos instalados > GameRec > Desinstalar**. Os vídeos gravados são mantidos. (Instalações feitas pelo `Instalar.bat` também podem ser removidas com `Desinstalar.bat`.)
 
 ## Problemas comuns
 
@@ -102,7 +95,7 @@ cargo install cargo-zigbuild   # precisa do zig no PATH
 cargo zigbuild --release --target x86_64-pc-windows-gnu
 ```
 
-Uma tag `v*` no GitHub dispara o workflow `release`, que compila no Windows e publica o `GameRec.exe` na release (é de lá que o instalador baixa).
+Uma tag `v*` (igual à versão do `Cargo.toml`) dispara o workflow `release`: compila no Windows, baixa o FFmpeg, gera o `GameRec-Setup.exe` com o [Inno Setup](https://jrsoftware.org/isinfo.php) e publica os dois na release.
 
 | Arquivo | Função |
 | --- | --- |
@@ -115,7 +108,8 @@ Uma tag `v*` no GitHub dispara o workflow `release`, que compila no Windows e pu
 | `src/win.rs` | Win32: monitores, janelas/detecção de jogo, hotkey F9. |
 | `src/config.rs` | Configurações em `%APPDATA%\GameRec\config.json`. |
 | `src/log.rs` | Log de diagnóstico em `%APPDATA%\GameRec\gamerec.log`. |
-| `Instalar.bat` / `scripts/installer.ps1` | Assistente gráfico de instalação. |
+| `installer/GameRec.iss` | Instalador (Inno Setup) publicado na release; `make-images.ps1` gera as imagens do assistente. |
+| `Instalar.bat` / `scripts/installer.ps1` | Assistente de instalação pelo código-fonte. |
 | `scripts/setup.ps1` | Instalação sem interface (usada pelo assistente). |
 | `Desinstalar.bat` / `scripts/uninstall.ps1` | Desinstalador. |
 
