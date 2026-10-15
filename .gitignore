@@ -1,4 +1,6 @@
 /target/
+/build/
+/dist/
 bin/
 *.exe
 !/assets/*.ico

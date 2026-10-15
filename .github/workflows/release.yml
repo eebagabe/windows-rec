@@ -10,17 +10,66 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+    defaults:
+      run:
+        shell: pwsh
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+
+      - name: Version
+        run: |
+          $ver = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME -ne "v$ver") {
+            throw "Tag $env:GITHUB_REF_NAME nao bate com a versao do Cargo.toml ($ver)"
+          }
+          "APP_VERSION=$ver" >> $env:GITHUB_ENV
+
       - name: Build
         run: cargo build --release --locked
+
+      - name: Download FFmpeg
+        run: |
+          # mesma escolha do setup.ps1: BtbN n8.x mais antigo (compativel com drivers NVIDIA >= 570)
+          $rel = Invoke-RestMethod https://api.github.com/repos/BtbN/FFmpeg-Builds/releases/tags/latest `
+            -Headers @{ Authorization = "Bearer ${{ github.token }}" }
+          $asset = $rel.assets |
+            Where-Object { $_.name -match '^ffmpeg-n(\d+)\.(\d+)-latest-win64-gpl-[\d.]+\.zip$' -and [int]$Matches[1] -ge 8 } |
+            Sort-Object { [version]($_.name -replace '^ffmpeg-n([\d.]+)-.*$', '$1') } |
+            Select-Object -First 1
+          if (-not $asset) { throw "Build do FFmpeg nao encontrado" }
+          Write-Host "FFmpeg: $($asset.name)"
+          Invoke-WebRequest $asset.browser_download_url -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip ffmpeg_x
+          $dir = (Get-ChildItem ffmpeg_x -Directory)[0].FullName
+          New-Item -ItemType Directory build/ffmpeg -Force | Out-Null
+          Copy-Item "$dir/bin/ffmpeg.exe" build/ffmpeg/
+          Copy-Item "$dir/LICENSE.txt" build/ffmpeg/ -ErrorAction SilentlyContinue
+          if (-not (& build/ffmpeg/ffmpeg.exe -hide_banner -filters | Select-String gfxcapture)) {
+            throw "FFmpeg sem gfxcapture"
+          }
+
+      - name: Install Inno Setup
+        run: |
+          Invoke-WebRequest https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe -OutFile is.exe
+          Start-Process ./is.exe -Wait -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/CURRENTUSER", "/PORTABLE=1", "/DIR=$env:RUNNER_TEMP\inno"
+
+      - name: Build installer
+        run: |
+          & "$env:RUNNER_TEMP\inno\ISCC.exe" /Q "/DAppVersion=$env:APP_VERSION" installer\GameRec.iss
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
       - uses: actions/upload-artifact@v4
         with:
           name: GameRec
-          path: target/release/GameRec.exe
+          path: |
+            target/release/GameRec.exe
+            dist/GameRec-Setup.exe
+
       - name: Publish release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: target/release/GameRec.exe
+          files: |
+            dist/GameRec-Setup.exe
+            target/release/GameRec.exe
