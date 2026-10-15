@@ -19,7 +19,7 @@ Gravador de tela para gameplays no Windows, com áudio do jogo e do microfone, d
 
 ## Instalação
 
-1. Baixe o **[GameRec-Setup.exe](https://github.com/eebagabe/windows-rec/releases/latest/download/GameRec-Setup.exe)** (página de [releases](https://github.com/eebagabe/windows-rec/releases)).
+1. Baixe o **[GameRec-Setup.exe](https://github.com/eebagabe/windows-rec/releases/latest/download/GameRec-Setup.exe)** (página de [releases](https://github.com/eebagabe/windows-rec/releases)). Os executáveis são assinados digitalmente; veja a [política de assinatura](#code-signing-policy).
 2. Abra e siga o assistente: escolha a pasta, se quer atalho na área de trabalho, e clique em **Instalar**.
 
 O instalador já traz o FFmpeg (não precisa de internet durante a instalação), cria os atalhos e coloca o GameRec em **Configurações > Aplicativos instalados** para desinstalar. Não precisa de administrador. Quem tinha a versão em Python pode instalar por cima: a pasta antiga é substituída e as configurações são mantidas. Para atualizar, rode o instalador da versão nova.
@@ -112,6 +112,21 @@ Uma tag `v*` (igual à versão do `Cargo.toml`) dispara o workflow `release`: co
 | `Instalar.bat` / `scripts/installer.ps1` | Assistente de instalação pelo código-fonte. |
 | `scripts/setup.ps1` | Instalação sem interface (usada pelo assistente). |
 | `Desinstalar.bat` / `scripts/uninstall.ps1` | Desinstalador. |
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
+
+Os executáveis publicados nas [releases](https://github.com/eebagabe/windows-rec/releases) (`GameRec.exe` e `GameRec-Setup.exe`) são compilados pelo GitHub Actions a partir deste repositório público e só são assinados nesse processo. O FFmpeg incluído no instalador é um programa de terceiros ([BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds)) e não é assinado por este projeto.
+
+**Team roles**
+
+- Committers and reviewers: [eebagabe](https://github.com/eebagabe)
+- Approvers: [eebagabe](https://github.com/eebagabe)
+
+**Privacy policy**
+
+This program will not transfer any information to other networking systems unless specifically requested by the user or the person installing or operating it. (O GameRec não coleta nem envia dados; o único acesso à internet é abrir o YouTube Studio no navegador quando você clica no botão.)
 
 ## Licença
 

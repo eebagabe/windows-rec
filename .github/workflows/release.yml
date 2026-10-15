@@ -70,6 +70,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          generate_release_notes: true
+          body: |
+            **Instalar:** baixe o `GameRec-Setup.exe` abaixo e siga o assistente.
+
+            Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). Veja a [política de assinatura](https://github.com/eebagabe/windows-rec#code-signing-policy).
           files: |
             dist/GameRec-Setup.exe
             target/release/GameRec.exe
