@@ -22,7 +22,7 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
 
-$Version = "2.0.0"
+$Version = "2.0.1"
 $repo    = Split-Path -Parent $PSScriptRoot
 $cache   = Join-Path $env:LOCALAPPDATA "GameRecBuild"
 $release = "https://github.com/eebagabe/windows-rec/releases/latest/download/GameRec.exe"
