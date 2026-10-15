@@ -1,7 +1,4 @@
-__pycache__/
-*.pyc
-build/
-dist/
-*.spec
+/target/
 bin/
-.venv/
+*.exe
+!/assets/*.ico
