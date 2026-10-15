@@ -131,11 +131,10 @@ $p1.Controls.Add((New-Label ("Gravador de tela para gameplays com áudio do jogo
     "detecção automática do jogo aberto e gravação acelerada pela placa de vídeo. " +
     "Os vídeos saem em MP4, prontos para o YouTube.") 36 86 450 70 10.5 $MUTED))
 $p1.Controls.Add((New-Label "O assistente vai instalar:" 36 170 450 24 10.5 $TEXT "Bold"))
-$p1.Controls.Add((New-Label ("•  FFmpeg - motor de gravação de vídeo`n" +
-    "•  Python 3.12 - somente se ainda não estiver instalado`n" +
-    "•  Bibliotecas do aplicativo`n" +
+$p1.Controls.Add((New-Label ("•  GameRec.exe - o aplicativo (cerca de 5 MB)`n" +
+    "•  FFmpeg - motor de gravação de vídeo`n" +
     "•  Atalhos na área de trabalho e no menu Iniciar") 36 198 450 100 10.5 $TEXT))
-$p1.Controls.Add((New-Label "É necessária conexão com a internet (cerca de 250 MB de download)." 36 320 450 40 9.5 $MUTED))
+$p1.Controls.Add((New-Label "É necessária conexão com a internet (cerca de 200 MB de download)." 36 320 450 40 9.5 $MUTED))
 
 # ---- pagina 2: opcoes
 $p2 = $pages[1]
@@ -169,11 +168,11 @@ $box.BackColor = $CARD
 $p2.Controls.Add($box)
 if ($sac -eq 1 -or $sac -eq 2) {
     $box.Controls.Add((New-Label "Smart App Control está ligado" 14 10 420 22 10 $ACCENT "Bold"))
-    $box.Controls.Add((New-Label ("O Windows bloqueia programas .exe sem assinatura paga. O GameRec será " +
-        "iniciado pelo Python (assinado), funcionando normalmente.") 14 34 426 56 9.5 $MUTED))
+    $box.Controls.Add((New-Label ("O Windows pode bloquear o GameRec.exe por não ter assinatura paga. " +
+        "O instalador testa e avisa se isso acontecer.") 14 34 426 56 9.5 $MUTED))
 } else {
-    $box.Controls.Add((New-Label "Modo executável" 14 10 420 22 10 $GREEN "Bold"))
-    $box.Controls.Add((New-Label "O GameRec será compilado como GameRec.exe nesta máquina." 14 34 426 56 9.5 $MUTED))
+    $box.Controls.Add((New-Label "Aplicativo nativo" 14 10 420 22 10 $GREEN "Bold"))
+    $box.Controls.Add((New-Label "GameRec.exe leve, sem Python nem outras dependências." 14 34 426 56 9.5 $MUTED))
 }
 
 # ---- pagina 3: instalacao
