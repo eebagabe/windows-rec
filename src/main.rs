@@ -4,6 +4,8 @@
 mod audio;
 mod config;
 mod controller;
+#[macro_use]
+mod log;
 mod theme;
 mod ui;
 mod video;
@@ -32,6 +34,16 @@ fn main() {
         return;
     }
     clock::now();
+    std::panic::set_hook(Box::new(|info| {
+        log!("PANIC: {info}");
+        win::message_box("GameRec", &format!("Erro inesperado: {info}\n\nDetalhes em {}", log::path().display()));
+    }));
+    log!(
+        "GameRec {} iniciado; ffmpeg: {} (existe: {})",
+        env!("CARGO_PKG_VERSION"),
+        video::ffmpeg_path().display(),
+        video::ffmpeg_path().exists()
+    );
     let icon = image::load_from_memory(ICON_PNG).ok().map(|img| {
         let img = img.into_rgba8();
         let (width, height) = img.dimensions();

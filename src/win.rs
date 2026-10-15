@@ -291,9 +291,23 @@ pub fn open(target: &str) {
     }
 }
 
-/// "AAAA-MM-DD_HH-MM-SS" no horario local.
-pub fn local_stamp() -> String {
+fn now_local() -> SYSTEMTIME {
     let mut t: SYSTEMTIME = unsafe { zeroed() };
     unsafe { GetLocalTime(&mut t) };
+    t
+}
+
+/// "AAAA-MM-DD_HH-MM-SS" no horario local.
+pub fn local_stamp() -> String {
+    let t = now_local();
     format!("{:04}-{:02}-{:02}_{:02}-{:02}-{:02}", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond)
+}
+
+/// "AAAA-MM-DD HH:MM:SS.mmm" no horario local (log).
+pub fn local_time() -> String {
+    let t = now_local();
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}.{:03}",
+        t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds
+    )
 }

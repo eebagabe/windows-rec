@@ -22,7 +22,7 @@ pub fn encoder_name(enc: &str) -> &'static str {
     }
 }
 
-fn ffmpeg_path() -> &'static Path {
+pub fn ffmpeg_path() -> &'static Path {
     static PATH: OnceLock<PathBuf> = OnceLock::new();
     PATH.get_or_init(|| {
         let dir = std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf)).unwrap_or_default();
@@ -132,6 +132,54 @@ pub enum Source {
     GdiDesktop,
 }
 
+impl Source {
+    pub fn label(self) -> &'static str {
+        match self {
+            Source::GfxWindow => "captura de janela (WGC)",
+            Source::GfxMonitor => "captura de tela (WGC)",
+            Source::Ddagrab => "captura de tela (DXGI)",
+            Source::GdiWindow => "captura de janela (GDI)",
+            Source::GdiDesktop => "captura de tela (GDI)",
+        }
+    }
+}
+
+/// Mensagens do FFmpeg que so dizem "falhou", sem a causa.
+const GENERIC: &[&str] = &[
+    "conversion failed",
+    "error opening output file",
+    "error opening input file",
+    "error opening output files",
+    "error opening input files",
+    "nothing was written into output file",
+    "terminating thread with return code",
+    "exiting normally",
+];
+
+/// Linha que explica o erro: a primeira que nao e generica, sem o "[filtro @ 0x...]".
+pub fn summarize_error(stderr: &str) -> String {
+    let clean = |l: &str| -> String {
+        let l = l.trim();
+        match (l.strip_prefix('['), l.find("] ")) {
+            (Some(rest), Some(end)) => {
+                let name = rest[..end - 1].split(" @ ").next().unwrap_or("");
+                format!("{name}: {}", &l[end + 2..])
+            }
+            _ => l.to_string(),
+        }
+    };
+    let lines: Vec<&str> = stderr.lines().filter(|l| !l.trim().is_empty()).collect();
+    lines
+        .iter()
+        .find(|l| {
+            let low = l.to_lowercase();
+            !GENERIC.iter().any(|g| low.contains(g))
+        })
+        .or(lines.last())
+        .map(|l| clean(l))
+        .unwrap_or_default()
+}
+
 pub struct Capture<'a> {
     pub source: Source,
     pub encoder: &'a str,
@@ -213,8 +261,10 @@ pub struct VideoRecorder {
 
 impl VideoRecorder {
     pub fn start(c: &Capture) -> std::io::Result<Self> {
+        let args = video_args(c);
+        crate::log!("ffmpeg {}", args.join(" "));
         let mut child =
-            ffmpeg().args(video_args(c)).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn()?;
+            ffmpeg().args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn()?;
         let stdin = child.stdin.take();
         let stdout = child.stdout.take().expect("stdout");
         let mut stderr_pipe = child.stderr.take().expect("stderr");
@@ -247,10 +297,9 @@ impl VideoRecorder {
         matches!(self.child.try_wait(), Ok(None))
     }
 
-    /// Ultima linha de erro do FFmpeg (valida depois de `stop`).
-    pub fn last_error(&self) -> String {
-        let s = self.stderr.lock().unwrap();
-        s.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("").trim().to_string()
+    /// Saida de erro completa do FFmpeg (valida depois de `stop`/`kill`).
+    pub fn stderr(&self) -> String {
+        self.stderr.lock().unwrap().clone()
     }
 
     /// Encerra na hora (tentativa de captura que nao iniciou).
@@ -354,11 +403,14 @@ pub fn mux(video: &Path, audios: &[AudioTrack], out: &Path) -> Result<(), String
         }
     }
     cmd.args(["-c:v", "copy", "-movflags", "+faststart"]).arg(out);
+    crate::log!("mux: {:?}", cmd.get_args().collect::<Vec<_>>());
     let r = cmd.stdin(Stdio::null()).output().map_err(|e| e.to_string())?;
     if r.status.success() {
         Ok(())
     } else {
         let err = String::from_utf8_lossy(&r.stderr);
-        Err(err.lines().last().unwrap_or("falha no ffmpeg").to_string())
+        crate::log!("mux falhou ({}):\n{err}", r.status);
+        let line = summarize_error(&err);
+        Err(if line.is_empty() { "falha no ffmpeg".into() } else { line })
     }
 }

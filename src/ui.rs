@@ -47,6 +47,7 @@ pub struct GameRecApp {
     window: Arc<Window>,
     meter_sys: f32,
     meter_mic: f32,
+    copied_at: Option<Instant>,
 }
 
 impl GameRecApp {
@@ -62,6 +63,7 @@ impl GameRecApp {
         })
         .join()
         .unwrap_or_default();
+        crate::log!("audio: saida={has_loopback} microfones={mic_names:?}; pasta={}", cfg.output_dir);
 
         let shared = Arc::new(Shared::new(cfg.clone()));
         if let Ok(h) = window.window_handle() {
@@ -77,6 +79,7 @@ impl GameRecApp {
         let (sh, repaint) = (shared.clone(), ctx.clone());
         std::thread::spawn(move || {
             let enc = video::detect_encoder();
+            crate::log!("encoder: {enc}");
             sh.status.lock().unwrap().encoder = Some(enc);
             repaint.request_repaint();
         });
@@ -112,6 +115,7 @@ impl GameRecApp {
             window,
             meter_sys: 0.0,
             meter_mic: 0.0,
+            copied_at: None,
         };
         if !app.has_loopback {
             app.cfg.system_audio = false;
@@ -265,17 +269,26 @@ impl GameRecApp {
                 let color = if st.phase == Phase::Recording { TEXT } else { theme::MUTED };
                 ui.label(RichText::new(fmt_time(elapsed)).font(bold(68.0)).color(color));
                 ui.add_space(-6.0);
-                let info = if st.phase == Phase::Recording {
-                    format!("{}  ·  F9 para parar", st.target)
+                if st.phase == Phase::Recording {
+                    let info = format!("{}  ·  F9 para parar", st.target);
+                    ui.add(egui::Label::new(RichText::new(info).font(regular(13.5)).color(MUTED)).truncate());
                 } else {
-                    st.info.clone()
-                };
-                ui.add(egui::Label::new(RichText::new(info).font(regular(13.5)).color(MUTED)).truncate());
+                    ui.add(egui::Label::new(RichText::new(&st.info).font(regular(13.5)).color(MUTED)).wrap());
+                }
                 ui.add_space(14.0);
                 if self.record_button(ui, st.phase).clicked() {
                     let _ = self.tx.send(Cmd::Toggle(None));
                 }
             });
+            let notice = match st.phase {
+                Phase::Idle => st.detail.as_ref().map(|d| (d, tone_color(st.tone))),
+                Phase::Recording => st.warning.as_ref().map(|w| (w, ORANGE)),
+                _ => None,
+            };
+            if let Some((text, color)) = notice {
+                ui.add_space(16.0);
+                self.notice(ui, &st.headline, &st.info, text, color);
+            }
             ui.add_space(18.0);
             let live = st.phase == Phase::Recording;
             let decay = |m: &mut f32, raw: u32, active: bool| {
@@ -288,6 +301,41 @@ impl GameRecApp {
             meter(ui, icon::VOLUME, "Sistema", self.meter_sys, live && st.sys_active);
             meter(ui, icon::MIC, "Microfone", self.meter_mic, live && st.mic_active);
         });
+    }
+
+    /// Painel com a explicacao completa do erro/aviso, para copiar e mandar.
+    fn notice(&mut self, ui: &mut Ui, headline: &str, info: &str, text: &str, color: Color32) {
+        Frame::new()
+            .fill(color.gamma_multiply(0.08))
+            .stroke(egui::Stroke::new(1.0_f32, color.gamma_multiply(0.35)))
+            .corner_radius(CornerRadius::same(10))
+            .inner_margin(Margin::same(12))
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                egui::ScrollArea::vertical().max_height(150.0).show(ui, |ui| {
+                    ui.add(egui::Label::new(RichText::new(text).font(regular(13.0)).color(TEXT)).wrap());
+                });
+                ui.add_space(6.0);
+                ui.horizontal(|ui| {
+                    let copied = self.copied_at.is_some_and(|t| t.elapsed() < Duration::from_secs(2));
+                    if ghost_button(ui, "", if copied { "Copiado!" } else { "Copiar erro" }).clicked() {
+                        let log = crate::log::path();
+                        ui.ctx().copy_text(format!(
+                            "GameRec {} — {headline}\n{info}\n\n{text}\n\nLog: {}",
+                            env!("CARGO_PKG_VERSION"),
+                            log.display()
+                        ));
+                        self.copied_at = Some(Instant::now());
+                        ui.ctx().request_repaint_after(Duration::from_secs(2));
+                    }
+                    if ghost_button(ui, "", "Abrir log")
+                        .on_hover_text(crate::log::path().display().to_string())
+                        .clicked()
+                    {
+                        win::open(&crate::log::path().to_string_lossy());
+                    }
+                });
+            });
     }
 
     fn record_button(&self, ui: &mut Ui, phase: Phase) -> egui::Response {

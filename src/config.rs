@@ -50,8 +50,12 @@ fn default_output_dir() -> PathBuf {
     home().join("Videos").join("GameRec")
 }
 
+pub fn config_dir() -> PathBuf {
+    std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(home).join("GameRec")
+}
+
 fn config_file() -> PathBuf {
-    std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(home).join("GameRec").join("config.json")
+    config_dir().join("config.json")
 }
 
 impl Config {
