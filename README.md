@@ -113,6 +113,10 @@ Uma tag `v*` (igual à versão do `Cargo.toml`) dispara o workflow `release`: co
 | `scripts/setup.ps1` | Instalação sem interface (usada pelo assistente). |
 | `Desinstalar.bat` / `scripts/uninstall.ps1` | Desinstalador. |
 
+## Licença
+
+Código do GameRec sob a [licença MIT](LICENSE). O FFmpeg distribuído junto com o instalador tem licença própria (GPL), incluída na instalação em `bin\ffmpeg-LICENSE.txt`.
+
 ## Créditos
 
 Gravação feita com [FFmpeg](https://ffmpeg.org) (builds de [BtbN](https://github.com/BtbN/FFmpeg-Builds) e [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), licença GPL), baixado durante a instalação. Interface com [egui](https://github.com/emilk/egui) e [egui_software_backend](https://github.com/DGriffin91/egui_software_backend), áudio com [cpal](https://github.com/RustAudio/cpal).
