@@ -83,6 +83,8 @@ No Windows 11 com o **Smart App Control** ligado, o Windows pode bloquear `.exe`
 | Sem som do jogo | Confira se a saída de áudio padrão do Windows é a que o jogo usa (fone/alto-falante). |
 | Microfone mudo | Configurações > Privacidade > Microfone > permitir que aplicativos da área de trabalho acessem o microfone. |
 | Erro na instalação | O assistente mostra o log. O arquivo completo fica em `%TEMP%\gamerec_setup.log`. |
+| Erro ao iniciar a gravação | O app mostra a causa com os botões **Copiar erro** e **Abrir log**. O log fica em `%APPDATA%\GameRec\gamerec.log`. |
+| "O Windows bloqueou o FFmpeg" | Smart App Control ou antivírus. Desligue o Smart App Control (Segurança do Windows > Controle de aplicativos e navegador) ou libere a pasta do GameRec no antivírus, e reinstale. |
 
 ## Desenvolvimento
 
@@ -112,6 +114,7 @@ Uma tag `v*` no GitHub dispara o workflow `release`, que compila no Windows e pu
 | `src/audio.rs` | Captura WASAPI (loopback e microfone) em WAV. |
 | `src/win.rs` | Win32: monitores, janelas/detecção de jogo, hotkey F9. |
 | `src/config.rs` | Configurações em `%APPDATA%\GameRec\config.json`. |
+| `src/log.rs` | Log de diagnóstico em `%APPDATA%\GameRec\gamerec.log`. |
 | `Instalar.bat` / `scripts/installer.ps1` | Assistente gráfico de instalação. |
 | `scripts/setup.ps1` | Instalação sem interface (usada pelo assistente). |
 | `Desinstalar.bat` / `scripts/uninstall.ps1` | Desinstalador. |
