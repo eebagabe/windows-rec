@@ -3,7 +3,7 @@
 Gravador de tela para gameplays no Windows, com áudio do jogo e do microfone, detecção automática do jogo aberto e gravação acelerada pela placa de vídeo. Os vídeos saem em MP4 (H.264 + AAC), prontos para subir no YouTube.
 
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows)
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![Rust](https://img.shields.io/badge/Rust-1.92%2B-000000?logo=rust)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-8.x-007808?logo=ffmpeg)
 
 ## Recursos
@@ -15,6 +15,7 @@ Gravador de tela para gameplays no Windows, com áudio do jogo e do microfone, d
 - **30 ou 60 FPS**, resolução nativa, 1440p, 1080p ou 720p e quatro níveis de qualidade.
 - Também grava monitores inteiros ou qualquer outra janela.
 - Lista das gravações recentes e atalho para o YouTube Studio.
+- **Leve**: um único `GameRec.exe` de ~5 MB, ~37 MB de RAM, sem Python. A interface é desenhada pela CPU (sem OpenGL/DirectX), então não disputa a placa de vídeo com o jogo, e quase não redesenha enquanto você joga.
 
 ## Instalação
 
@@ -28,12 +29,11 @@ O assistente baixa e configura tudo sozinho:
 
 | Item | Detalhe |
 | --- | --- |
+| GameRec.exe | O aplicativo. Usa o `GameRec.exe` da pasta do projeto se existir; senão compila com `cargo` (se o Rust estiver instalado) ou baixa da última [release](https://github.com/eebagabe/windows-rec/releases). |
 | FFmpeg | Motor de gravação. O instalador testa versões até achar uma que rode na sua máquina com encoder de GPU. |
-| Python 3.12 | Só se você ainda não tiver Python 3.10+ (instalação apenas para o seu usuário). |
-| Bibliotecas | `customtkinter`, `pyaudiowpatch`, `pillow`. |
 | Atalhos | Área de trabalho e menu Iniciar. |
 
-Precisa de internet (cerca de 250 MB). Não precisa de administrador.
+Precisa de internet (cerca de 200 MB, quase tudo FFmpeg). Não precisa de administrador. Quem tinha a versão em Python instalada pode instalar por cima: a pasta antiga é substituída e as configurações são mantidas.
 
 > Se aparecer a tela azul **"O Windows protegeu o computador"**, clique em **Mais informações > Executar assim mesmo**.
 
@@ -48,7 +48,7 @@ Opções:
 | Parâmetro | Descrição |
 | --- | --- |
 | `-InstallDir <pasta>` | Pasta de instalação (padrão: `%LOCALAPPDATA%\Programs\GameRec`). |
-| `-Mode auto\|exe\|script` | `exe` compila um `GameRec.exe` com PyInstaller; `script` roda via `pythonw.exe`. Padrão `auto`. |
+| `-ExePath <arquivo>` | Usa um `GameRec.exe` específico em vez de procurar/baixar. |
 | `-NoDesktopShortcut` | Não cria atalho na área de trabalho. |
 | `-NoStartMenuShortcut` | Não cria atalho no menu Iniciar. |
 
@@ -68,7 +68,7 @@ No campo **Gravar** você escolhe:
 
 ## Smart App Control
 
-No Windows 11 com o **Smart App Control** ligado, programas `.exe` sem assinatura digital paga são bloqueados. Nesse caso o instalador configura o GameRec para rodar pelo `pythonw.exe` (assinado pela Python Software Foundation): o atalho e o ícone funcionam do mesmo jeito. Com o Smart App Control desligado, o instalador compila um `GameRec.exe`.
+No Windows 11 com o **Smart App Control** ligado, o Windows pode bloquear `.exe` sem assinatura digital paga (principalmente arquivos baixados da internet). O instalador testa se o `GameRec.exe` roda e, se for bloqueado, avisa. Nesse caso compile na própria máquina (`cargo build --release`) ou desligue o Smart App Control em **Segurança do Windows > Controle de aplicativos e navegador**.
 
 ## Desinstalar
 
@@ -87,21 +87,35 @@ No Windows 11 com o **Smart App Control** ligado, programas `.exe` sem assinatur
 ## Desenvolvimento
 
 ```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\pip install customtkinter pyaudiowpatch pillow
-python make_icon.py                     # gera assets\icon.png e assets\icon.ico
-# coloque um ffmpeg.exe (8.0+) em bin\ffmpeg.exe
-.venv\Scripts\python gamerec.py
+cargo build --release          # gera target\release\GameRec.exe
+# coloque um ffmpeg.exe (8.0+) em target\release\bin\ffmpeg.exe
+target\release\GameRec.exe
 ```
+
+Compilando a partir do Linux/WSL (sem ícone embutido no exe):
+
+```bash
+rustup target add x86_64-pc-windows-gnu
+cargo install cargo-zigbuild   # precisa do zig no PATH
+cargo zigbuild --release --target x86_64-pc-windows-gnu
+```
+
+Uma tag `v*` no GitHub dispara o workflow `release`, que compila no Windows e publica o `GameRec.exe` na release (é de lá que o instalador baixa).
 
 | Arquivo | Função |
 | --- | --- |
-| `gamerec.py` | Aplicativo (interface, captura, áudio, mixagem). |
-| `make_icon.py` | Gera o ícone. |
+| `src/main.rs` | Entrada; cria a janela. |
+| `src/window.rs` | Janela winit desenhada por software (softbuffer), com limite de quadros. |
+| `src/ui.rs`, `src/theme.rs` | Interface (egui), cores e widgets próprios. |
+| `src/controller.rs` | Thread de gravação: inicia/para captura, independente da interface. |
+| `src/video.rs` | Comandos do FFmpeg (captura, encoder, mixagem final). |
+| `src/audio.rs` | Captura WASAPI (loopback e microfone) em WAV. |
+| `src/win.rs` | Win32: monitores, janelas/detecção de jogo, hotkey F9. |
+| `src/config.rs` | Configurações em `%APPDATA%\GameRec\config.json`. |
 | `Instalar.bat` / `scripts/installer.ps1` | Assistente gráfico de instalação. |
 | `scripts/setup.ps1` | Instalação sem interface (usada pelo assistente). |
 | `Desinstalar.bat` / `scripts/uninstall.ps1` | Desinstalador. |
 
 ## Créditos
 
-Gravação feita com [FFmpeg](https://ffmpeg.org) (builds de [BtbN](https://github.com/BtbN/FFmpeg-Builds) e [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), licença GPL), baixado durante a instalação. Interface com [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) e áudio com [PyAudioWPatch](https://github.com/s0d3s/PyAudioWPatch).
+Gravação feita com [FFmpeg](https://ffmpeg.org) (builds de [BtbN](https://github.com/BtbN/FFmpeg-Builds) e [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), licença GPL), baixado durante a instalação. Interface com [egui](https://github.com/emilk/egui) e [egui_software_backend](https://github.com/DGriffin91/egui_software_backend), áudio com [cpal](https://github.com/RustAudio/cpal).
