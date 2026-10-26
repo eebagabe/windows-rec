@@ -1,123 +1,97 @@
-# GameRec
+# WinRec
 
-Gravador de tela para gameplays no Windows, com áudio do jogo e do microfone, detecção automática do jogo aberto e gravação acelerada pela placa de vídeo. Os vídeos saem em MP4 (H.264 + AAC), prontos para subir no YouTube.
+Gravador de tela para Windows: grava monitores, janelas e webcam, com áudio do computador e do microfone, usando a placa de vídeo para codificar. Os vídeos saem em MP4 (H.264 + AAC), prontos para compartilhar ou editar.
 
 ![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows)
-![Rust](https://img.shields.io/badge/Rust-1.92%2B-000000?logo=rust)
+![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet)
+![C#](https://img.shields.io/badge/C%23-14-239120?logo=csharp)
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-8.x-007808?logo=ffmpeg)
 
 ## Recursos
 
-- **Detecta o jogo aberto**: grava só a janela do jogo, sem pegar o que estiver por cima (Windows Graphics Capture, funciona com DirectX/Vulkan).
-- **F9 em qualquer lugar**: inicia e para a gravação, inclusive com o jogo em tela cheia.
+- **Grava o que você escolher**: um monitor inteiro, uma janela específica (sem pegar o que estiver por cima, via Windows Graphics Capture) ou a webcam.
+- **F9 em qualquer lugar**: inicia e para a gravação mesmo com outro programa em tela cheia. No modo automático, o F9 grava a janela que estiver em foco.
 - **Encoder por GPU**: NVIDIA NVENC, AMD AMF ou Intel Quick Sync, detectado automaticamente (com fallback para CPU/x264).
-- **Áudio do sistema + microfone**: volumes separados, medidores de nível e sincronia com o vídeo.
+- **Áudio do computador + microfone**: volumes separados, medidores de nível e sincronia com o vídeo.
+- **Teste de microfone**: grava 5 segundos com medidor ao vivo e toca de volta para você ouvir.
+- **Teste de webcam**: prévia ao vivo para conferir enquadramento e iluminação antes de gravar.
 - **30 ou 60 FPS**, resolução nativa, 1440p, 1080p ou 720p e quatro níveis de qualidade.
-- Também grava monitores inteiros ou qualquer outra janela.
-- Lista das gravações recentes e atalho para o YouTube Studio.
-- **Leve**: um único `GameRec.exe` de ~5 MB, ~37 MB de RAM, sem Python. A interface é desenhada pela CPU (sem OpenGL/DirectX), então não disputa a placa de vídeo com o jogo, e quase não redesenha enquanto você joga.
+- Lista das gravações recentes com miniatura, duração e tamanho.
+- **Leve**: a interface só redesenha quando algo muda; parado, o app não gasta CPU. Durante a gravação, fora de foco, atualiza uma vez por segundo.
 
 ## Instalação
 
-1. Baixe o **[GameRec-Setup.exe](https://github.com/eebagabe/windows-rec/releases/latest/download/GameRec-Setup.exe)** (página de [releases](https://github.com/eebagabe/windows-rec/releases)). Os executáveis são assinados digitalmente; veja a [política de assinatura](#code-signing-policy).
+1. Baixe o **[WinRec-Setup.exe](https://github.com/eebagabe/windows-rec/releases/latest/download/WinRec-Setup.exe)** (página de [releases](https://github.com/eebagabe/windows-rec/releases)). Os executáveis são assinados digitalmente; veja a [política de assinatura](#code-signing-policy).
 2. Abra e siga o assistente: escolha a pasta, se quer atalho na área de trabalho, e clique em **Instalar**.
 
-O instalador já traz o FFmpeg (não precisa de internet durante a instalação), cria os atalhos e coloca o GameRec em **Configurações > Aplicativos instalados** para desinstalar. Não precisa de administrador. Quem tinha a versão em Python pode instalar por cima: a pasta antiga é substituída e as configurações são mantidas. Para atualizar, rode o instalador da versão nova.
+O instalador já traz o FFmpeg e tudo o que o app precisa (não é necessário instalar o .NET), cria os atalhos e coloca o WinRec em **Configurações > Aplicativos instalados** para desinstalar. Não precisa de administrador. Para atualizar, rode o instalador da versão nova.
 
 > Se aparecer a tela azul **"O Windows protegeu o computador"**, clique em **Mais informações > Executar assim mesmo**.
 
-### Instalação pelo código-fonte
-
-Baixe o projeto (`git clone` ou **Code > Download ZIP**; no ZIP, antes de extrair, clique com o botão direito > **Propriedades** > **Desbloquear**) e dê dois cliques em **`Instalar.bat`**. Esse assistente usa o `GameRec.exe` da pasta do projeto se existir; senão compila com `cargo` (se o Rust estiver instalado) ou baixa da última release. O FFmpeg é baixado na hora, testando versões até achar uma que rode na máquina com encoder de GPU (cerca de 200 MB).
-
-#### Pelo terminal (sem assistente)
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
-```
-
-Opções:
-
-| Parâmetro | Descrição |
-| --- | --- |
-| `-InstallDir <pasta>` | Pasta de instalação (padrão: `%LOCALAPPDATA%\Programs\GameRec`). |
-| `-ExePath <arquivo>` | Usa um `GameRec.exe` específico em vez de procurar/baixar. |
-| `-NoDesktopShortcut` | Não cria atalho na área de trabalho. |
-| `-NoStartMenuShortcut` | Não cria atalho no menu Iniciar. |
-
 ## Como usar
 
-1. Abra o **GameRec** pelo atalho.
-2. Abra o jogo.
-3. Dentro do jogo, aperte **F9** para começar e **F9** de novo para parar.
+1. Abra o **WinRec** pelo atalho.
+2. Em **O que gravar**, escolha o monitor, a janela ou a webcam.
+3. Aperte **F9** (ou o botão **Iniciar gravação**) para começar e **F9** de novo para parar.
 
-Os vídeos ficam em **`Vídeos\GameRec`** com o nome `Gameplay_AAAA-MM-DD_HH-MM-SS.mp4`. A pasta pode ser trocada no app.
+Os vídeos ficam em **`Vídeos\WinRec`** com o nome `Gravacao_AAAA-MM-DD_HH-MM-SS.mp4`. A pasta pode ser trocada em **Saída > Alterar**.
 
-No campo **Gravar** você escolhe:
+Opções do campo **O que gravar**:
 
-- **Automático (jogo aberto)**: com F9, grava a janela em foco. Pelo botão, grava o jogo detectado. Sem jogo aberto, grava o monitor principal.
-- **Jogo: ... / Janela: ...**: uma janela específica.
+- **Automático**: com F9, grava a janela em foco. Pelo botão, grava o monitor principal.
 - **Tela: Monitor N**: o monitor inteiro.
-
-## Smart App Control
-
-No Windows 11 com o **Smart App Control** ligado, o Windows pode bloquear `.exe` sem assinatura digital paga (principalmente arquivos baixados da internet). O instalador testa se o `GameRec.exe` roda e, se for bloqueado, avisa. Nesse caso compile na própria máquina (`cargo build --release`) ou desligue o Smart App Control em **Segurança do Windows > Controle de aplicativos e navegador**.
-
-## Desinstalar
-
-**Configurações > Aplicativos > Aplicativos instalados > GameRec > Desinstalar**. Os vídeos gravados são mantidos. (Instalações feitas pelo `Instalar.bat` também podem ser removidas com `Desinstalar.bat`.)
+- **Webcam: ...**: a câmera escolhida.
+- **Janela: ...**: um programa específico, mesmo que outras janelas fiquem por cima.
 
 ## Problemas comuns
 
 | Problema | Solução |
 | --- | --- |
-| "Jogo minimizado" | Volte para o jogo e aperte F9 dentro dele. |
+| "Janela minimizada" | Restaure a janela e aperte F9 com ela em foco. |
 | Encoder aparece como "CPU (x264)" | Atualize o driver da placa de vídeo. A gravação funciona, mas usa mais processador. |
-| Sem som do jogo | Confira se a saída de áudio padrão do Windows é a que o jogo usa (fone/alto-falante). |
-| Microfone mudo | Configurações > Privacidade > Microfone > permitir que aplicativos da área de trabalho acessem o microfone. |
-| Erro na instalação | O assistente mostra o log. O arquivo completo fica em `%TEMP%\gamerec_setup.log`. |
-| Erro ao iniciar a gravação | O app mostra a causa com os botões **Copiar erro** e **Abrir log**. O log fica em `%APPDATA%\GameRec\gamerec.log`. |
-| "O Windows bloqueou o FFmpeg" | Smart App Control ou antivírus. Desligue o Smart App Control (Segurança do Windows > Controle de aplicativos e navegador) ou libere a pasta do GameRec no antivírus, e reinstale. |
+| Sem som do computador | Confira se a saída de áudio padrão do Windows é a que o programa usa (fone/alto-falante). |
+| Microfone mudo | Use **Testar microfone**. Se nada for captado: Configurações > Privacidade > Microfone > permitir que aplicativos da área de trabalho acessem o microfone. |
+| Webcam não abre | Feche outros programas que estejam usando a câmera (Teams, Zoom, navegador) e clique em **Testar câmera** de novo. |
+| Erro ao iniciar a gravação | O app mostra a causa com os botões **Copiar erro** e **Abrir log**. O log fica em `%APPDATA%\WinRec\winrec.log`. |
+| "O Windows bloqueou o FFmpeg" | Smart App Control ou antivírus. Desligue o Smart App Control (Segurança do Windows > Controle de aplicativos e navegador) ou libere a pasta do WinRec no antivírus, e reinstale. |
+
+## Desinstalar
+
+**Configurações > Aplicativos > Aplicativos instalados > WinRec > Desinstalar**. Os vídeos gravados são mantidos.
 
 ## Desenvolvimento
 
+Requisitos: [.NET SDK 10](https://dotnet.microsoft.com/download) e, para gerar o instalador, [Inno Setup 6.7+](https://jrsoftware.org/isinfo.php).
+
 ```powershell
-cargo build --release          # gera target\release\GameRec.exe
-# coloque um ffmpeg.exe (8.0+) em target\release\bin\ffmpeg.exe
-target\release\GameRec.exe
+dotnet test                       # testes da biblioteca (rodam também em Linux/macOS)
+dotnet run --project src\WinRec   # precisa de um ffmpeg.exe 8.0+ no PATH (ou em bin\ ao lado do WinRec.exe)
+.\build.ps1                       # testes + publish + FFmpeg + instalador em dist\WinRec-Setup.exe
 ```
 
-Compilando a partir do Linux/WSL (sem ícone embutido no exe):
+O FFmpeg usado no instalador pode ser baixado separadamente com `scripts\get-ffmpeg.ps1` (vai para `build\ffmpeg`).
 
-```bash
-rustup target add x86_64-pc-windows-gnu
-cargo install cargo-zigbuild   # precisa do zig no PATH
-cargo zigbuild --release --target x86_64-pc-windows-gnu
-```
+O workflow `release` roda os testes e gera o instalador a cada push e pull request. Uma tag `v*` (igual à `<Version>` do `Directory.Build.props`) publica o `WinRec-Setup.exe` na release.
 
-Uma tag `v*` (igual à versão do `Cargo.toml`) dispara o workflow `release`: compila no Windows, baixa o FFmpeg, gera o `GameRec-Setup.exe` com o [Inno Setup](https://jrsoftware.org/isinfo.php) e publica os dois na release.
+### Arquitetura
 
-| Arquivo | Função |
+| Projeto / pasta | Função |
 | --- | --- |
-| `src/main.rs` | Entrada; cria a janela. |
-| `src/window.rs` | Janela winit desenhada por software (softbuffer), com limite de quadros. |
-| `src/ui.rs`, `src/theme.rs` | Interface (egui), cores e widgets próprios. |
-| `src/controller.rs` | Thread de gravação: inicia/para captura, independente da interface. |
-| `src/video.rs` | Comandos do FFmpeg (captura, encoder, mixagem final). |
-| `src/audio.rs` | Captura WASAPI (loopback e microfone) em WAV. |
-| `src/win.rs` | Win32: monitores, janelas/detecção de jogo, hotkey F9. |
-| `src/config.rs` | Configurações em `%APPDATA%\GameRec\config.json`. |
-| `src/log.rs` | Log de diagnóstico em `%APPDATA%\GameRec\gamerec.log`. |
-| `installer/GameRec.iss` | Instalador (Inno Setup) publicado na release; `make-images.ps1` gera as imagens do assistente. |
-| `Instalar.bat` / `scripts/installer.ps1` | Assistente de instalação pelo código-fonte. |
-| `scripts/setup.ps1` | Instalação sem interface (usada pelo assistente). |
-| `Desinstalar.bat` / `scripts/uninstall.ps1` | Desinstalador. |
+| `src/WinRec.Core` | Biblioteca sem dependência de interface: configuração, log, linhas de comando do FFmpeg (captura, encoder, mixagem), detecção de encoder, prévia da webcam e medidor de áudio. |
+| `src/WinRec/Recording` | `RecordingController`: thread de gravação independente da interface; resolve o alvo, tenta fontes de captura e encoders em cascata e junta vídeo e áudio alinhados no final. |
+| `src/WinRec/Audio` | Captura WASAPI (loopback do sistema e microfone) com NAudio e o teste de microfone. |
+| `src/WinRec/Interop` | Win32: monitores, janelas e atalho global F9. |
+| `src/WinRec/ViewModels`, `MainWindow.xaml` | Interface WPF em MVVM (CommunityToolkit.Mvvm) com visual Fluent (WPF-UI). |
+| `tests/WinRec.Core.Tests` | Testes xUnit da biblioteca. |
+| `installer/WinRec.iss` | Assistente de instalação (Inno Setup); `make-images.ps1` gera as imagens do assistente. |
+
+Como a gravação funciona: o vídeo é capturado pelo FFmpeg (WGC, DXGI ou GDI, nessa ordem de preferência) direto para um MKV temporário, enquanto o áudio é gravado em WAV pelo WASAPI. Ao parar, o FFmpeg junta tudo num MP4, alinhando cada faixa de áudio pelo instante do primeiro quadro, sem recodificar o vídeo.
 
 ## Code signing policy
 
 Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
 
-Os executáveis publicados nas [releases](https://github.com/eebagabe/windows-rec/releases) (`GameRec.exe` e `GameRec-Setup.exe`) são compilados pelo GitHub Actions a partir deste repositório público e só são assinados nesse processo. O FFmpeg incluído no instalador é um programa de terceiros ([BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds)) e não é assinado por este projeto.
+Os executáveis publicados nas [releases](https://github.com/eebagabe/windows-rec/releases) (`WinRec.exe` e `WinRec-Setup.exe`) são compilados pelo GitHub Actions a partir deste repositório público e só são assinados nesse processo. O FFmpeg incluído no instalador é um programa de terceiros ([BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds)) e não é assinado por este projeto.
 
 **Team roles**
 
@@ -126,12 +100,12 @@ Os executáveis publicados nas [releases](https://github.com/eebagabe/windows-re
 
 **Privacy policy**
 
-This program will not transfer any information to other networking systems unless specifically requested by the user or the person installing or operating it. (O GameRec não coleta nem envia dados; o único acesso à internet é abrir o YouTube Studio no navegador quando você clica no botão.)
+This program will not transfer any information to other networking systems unless specifically requested by the user or the person installing or operating it. (O WinRec não coleta nem envia dados e não acessa a internet.)
 
 ## Licença
 
-Código do GameRec sob a [licença MIT](LICENSE). O FFmpeg distribuído junto com o instalador tem licença própria (GPL), incluída na instalação em `bin\ffmpeg-LICENSE.txt`.
+Código do WinRec sob a [licença MIT](LICENSE). O FFmpeg distribuído junto com o instalador tem licença própria (GPL), incluída na instalação em `bin\ffmpeg-LICENSE.txt`.
 
 ## Créditos
 
-Gravação feita com [FFmpeg](https://ffmpeg.org) (builds de [BtbN](https://github.com/BtbN/FFmpeg-Builds) e [gyan.dev](https://www.gyan.dev/ffmpeg/builds/), licença GPL), baixado durante a instalação. Interface com [egui](https://github.com/emilk/egui) e [egui_software_backend](https://github.com/DGriffin91/egui_software_backend), áudio com [cpal](https://github.com/RustAudio/cpal).
+Gravação feita com [FFmpeg](https://ffmpeg.org) (builds de [BtbN](https://github.com/BtbN/FFmpeg-Builds), licença GPL). Interface com [WPF-UI](https://github.com/lepoco/wpfui) e [CommunityToolkit.Mvvm](https://github.com/CommunityToolkit/dotnet), áudio com [NAudio](https://github.com/naudio/NAudio).
