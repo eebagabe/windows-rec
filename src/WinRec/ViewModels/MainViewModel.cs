@@ -70,6 +70,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         RefreshRecordings();
         _ = LoadDevicesAsync();
+        _ = LoadCamerasAsync();
         _ = DetectEncoderAsync();
     }
 
@@ -156,7 +157,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void ToggleRecording() => Toggle(null);
 
     /// <summary>Do botão (sem janela) ou do F9 (janela em foco no momento).</summary>
-    public void Toggle(nint? foreground) => _controller.ToggleRecording(foreground);
+    public void Toggle(nint? foreground)
+    {
+        // a webcam só pode ser aberta por um programa por vez
+        StopCameraPreview();
+        _controller.ToggleRecording(foreground);
+    }
 
     [RelayCommand]
     private async Task CopyErrorAsync()
@@ -200,6 +206,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             var main = m.Primary ? " (principal)" : "";
             Sources.Add(new SourceOption($"Tela: Monitor {i + 1} · {m.Width}×{m.Height}{main}", SourceKey.Monitor(i), SymbolRegular.Desktop24));
         }
+        foreach (var cam in Cameras)
+            Sources.Add(new SourceOption($"Webcam: {cam}", SourceKey.Camera(cam), SymbolRegular.Camera24));
         foreach (var w in Desktop.Windows().DistinctBy(w => w.Exe))
             Sources.Add(new SourceOption($"Janela: {w.Title}", SourceKey.Window(w.Exe), SymbolRegular.WindowApps24));
         // fonte salva que não está disponível agora continua selecionável
@@ -207,6 +215,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             var (kind, value) = SourceKey.Parse(key);
             if (kind == "win") Sources.Add(new SourceOption($"Janela: {value} (fechada)", key, SymbolRegular.WindowApps24));
+            else if (kind == "cam") Sources.Add(new SourceOption($"Webcam: {value} (desconectada)", key, SymbolRegular.Camera24));
         }
         SelectedSource = Sources.FirstOrDefault(s => s.Key == key) ?? Sources[1];
         _syncing = wasSyncing;
@@ -293,6 +302,99 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             IsMicTesting = false;
             MicTestMeter = 0;
         }
+    }
+
+    // ------------------------------------------------------------------ webcam
+
+    private const int PreviewWidth = 320, PreviewHeight = 180;
+    private readonly Lock _frameGate = new();
+    private readonly byte[] _frame = new byte[PreviewWidth * PreviewHeight * 4];
+    private bool _framePending;
+    private CameraPreview? _preview;
+
+    public ObservableCollection<string> Cameras { get; } = [];
+
+    [ObservableProperty] private string? _selectedCamera;
+    [ObservableProperty] private bool _isCameraPreviewing;
+    [ObservableProperty] private string _cameraStatus = "Procurando webcams...";
+
+    public WriteableBitmap CameraFrame { get; } =
+        new(PreviewWidth, PreviewHeight, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null);
+
+    [RelayCommand]
+    private async Task LoadCamerasAsync()
+    {
+        StopCameraPreview();
+        var cams = await Task.Run(Ffmpeg.ListCamerasAsync);
+        Log.Write($"webcams: [{string.Join(", ", cams)}]");
+        Cameras.Clear();
+        foreach (var c in cams) Cameras.Add(c);
+        var (kind, value) = SourceKey.Parse(_config.Source);
+        SelectedCamera = kind == "cam" && cams.Contains(value) ? value : cams.FirstOrDefault();
+        CameraStatus = cams.Count == 0
+            ? "Nenhuma webcam encontrada."
+            : "Mostra a imagem da câmera para conferir enquadramento e iluminação.";
+        RefreshSources();
+    }
+
+    [RelayCommand]
+    private void TestCamera()
+    {
+        if (_preview is not null)
+        {
+            StopCameraPreview();
+            return;
+        }
+        if (SelectedCamera is not { } cam) return;
+        try
+        {
+            _preview = new CameraPreview(cam, PreviewWidth, PreviewHeight);
+        }
+        catch (System.ComponentModel.Win32Exception e)
+        {
+            CameraStatus = $"O FFmpeg não pôde ser executado: {e.Message}";
+            return;
+        }
+        var preview = _preview;
+        preview.Frame += OnCameraFrame;
+        preview.Ended += why => Application.Current.Dispatcher.BeginInvoke(() =>
+        {
+            if (_preview != preview) return;
+            StopCameraPreview();
+            if (why.Length > 0) CameraStatus = $"A webcam não abriu: {why}. Ela pode estar em uso por outro programa.";
+        });
+        IsCameraPreviewing = true;
+        CameraStatus = $"Prévia de {cam}";
+    }
+
+    /// <summary>Thread de leitura: guarda o último quadro e agenda um único desenho por vez (descarta se a UI atrasar).</summary>
+    private void OnCameraFrame(byte[] frame)
+    {
+        lock (_frameGate)
+        {
+            frame.CopyTo(_frame, 0);
+            if (_framePending) return;
+            _framePending = true;
+        }
+        Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Render, () =>
+        {
+            lock (_frameGate)
+            {
+                _framePending = false;
+                CameraFrame.WritePixels(new Int32Rect(0, 0, PreviewWidth, PreviewHeight), _frame, PreviewWidth * 4, 0);
+            }
+        });
+    }
+
+    private void StopCameraPreview()
+    {
+        if (_preview is null) return;
+        var preview = _preview;
+        _preview = null;
+        preview.Frame -= OnCameraFrame;
+        preview.Dispose();
+        IsCameraPreviewing = false;
+        CameraStatus = "Mostra a imagem da câmera para conferir enquadramento e iluminação.";
     }
 
     // ------------------------------------------------------------------ saída
@@ -408,6 +510,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         _tick.Stop();
         _saveDebounce.Stop();
+        StopCameraPreview();
         _controller.Dispose();
         _config.Save(AppPaths.ConfigFile);
         _probeSlots.Dispose();

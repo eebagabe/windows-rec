@@ -407,6 +407,54 @@
                     <ui:Card Margin="0,12,0,0" Padding="18,14">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Camera24" FontSize="16" />
+                                <TextBlock Style="{StaticResource SectionTitle}" Text="WEBCAM" />
+                            </StackPanel>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox ItemsSource="{Binding Cameras}" SelectedItem="{Binding SelectedCamera}">
+                                    <ComboBox.Style>
+                                        <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsCameraPreviewing}" Value="True">
+                                                    <Setter Property="IsEnabled" Value="False" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ComboBox.Style>
+                                </ComboBox>
+                                <ui:Button Grid.Column="1" Margin="6,0,0,0" Icon="{ui:SymbolIcon ArrowClockwise24}"
+                                           ToolTip="Procurar webcams" Command="{Binding LoadCamerasCommand}" />
+                            </Grid>
+                            <Border Margin="0,10,0,0" CornerRadius="8" ClipToBounds="True" Background="Black"
+                                    Visibility="{Binding IsCameraPreviewing, Converter={StaticResource BoolToVisibility}}">
+                                <Image Source="{Binding CameraFrame}" Stretch="Uniform" />
+                            </Border>
+                            <ui:Button Margin="0,10,0,0" Icon="{ui:SymbolIcon Camera24}" Command="{Binding TestCameraCommand}">
+                                <ui:Button.Style>
+                                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                        <Setter Property="Content" Value="Testar câmera" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsCameraPreviewing}" Value="True">
+                                                <Setter Property="Content" Value="Fechar prévia" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SelectedCamera}" Value="{x:Null}">
+                                                <Setter Property="IsEnabled" Value="False" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ui:Button.Style>
+                            </ui:Button>
+                            <TextBlock Style="{StaticResource Hint}" Text="{Binding CameraStatus}" />
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Margin="0,12,0,0" Padding="18,14">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
                                 <ui:SymbolIcon Symbol="Folder24" FontSize="16" />
                                 <TextBlock Style="{StaticResource SectionTitle}" Text="SAÍDA" />
                             </StackPanel>
