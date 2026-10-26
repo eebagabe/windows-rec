@@ -13,7 +13,6 @@ internal static class Native
     public const uint GW_OWNER = 4;
     public const int SW_MINIMIZE = 6;
     public const int SW_RESTORE = 9;
-    public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
     public const int DWMWA_CLOAKED = 14;
     public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
     public const uint MONITORINFOF_PRIMARY = 1;
@@ -84,9 +83,6 @@ internal static class Native
 
     [DllImport("dwmapi.dll")]
     public static extern int DwmGetWindowAttribute(nint hwnd, int dwAttribute, out int pvAttribute, int cbAttribute);
-
-    [DllImport("dwmapi.dll")]
-    public static extern int DwmSetWindowAttribute(nint hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern nint OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);

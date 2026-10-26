@@ -94,11 +94,4 @@ public static class Desktop
         ShowWindow(h, SW_RESTORE);
         SetForegroundWindow(h);
     }
-
-    /// <summary>Barra de título escura (Windows 10 20H1+ / 11).</summary>
-    public static void UseDarkTitleBar(nint h)
-    {
-        var on = 1;
-        DwmSetWindowAttribute(h, DWMWA_USE_IMMERSIVE_DARK_MODE, ref on, sizeof(int));
-    }
 }

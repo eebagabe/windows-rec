@@ -1,5 +1,408 @@
-<Window x:Class="WinRec.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="WinRec" Width="1080" Height="720">
-</Window>
+<ui:FluentWindow x:Class="WinRec.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:vm="clr-namespace:WinRec.ViewModels"
+                 xmlns:rec="clr-namespace:WinRec.Recording"
+                 mc:Ignorable="d"
+                 d:DataContext="{d:DesignInstance vm:MainViewModel}"
+                 Title="WinRec" Width="1120" Height="760" MinWidth="980" MinHeight="660"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="WinRec">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/icon.png" />
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <!-- cabeçalho -->
+        <Grid Grid.Row="1" Margin="24,4,24,14">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="pack://application:,,,/Assets/icon.png" Width="44" Height="44" />
+                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="WinRec" FontSize="24" FontWeight="Bold" />
+                    <TextBlock Text="Grave a tela, janelas, webcam e áudio" FontSize="13"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Border CornerRadius="14" Padding="12,5" Margin="0,0,8,0" Background="{StaticResource SubtleSurfaceBrush}"
+                        ToolTip="Funciona em qualquer lugar, inclusive com outro programa em tela cheia">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Keyboard24" FontSize="14" />
+                        <TextBlock Margin="6,0,0,0" FontSize="12.5">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="F9  iniciar / parar" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HotkeyOk}" Value="False">
+                                            <Setter Property="Text" Value="F9 indisponível (em uso por outro programa)" />
+                                            <Setter Property="Foreground" Value="{StaticResource WarnBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+                <Border CornerRadius="14" Padding="12,5" Background="{StaticResource SubtleSurfaceBrush}"
+                        ToolTip="Encoder de vídeo usado na gravação">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Flash24" FontSize="14" />
+                        <TextBlock Margin="6,0,0,0" FontSize="12.5" Text="{Binding EncoderText}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EncoderIsGpu}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource OkBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="24,0,24,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="380" />
+            </Grid.ColumnDefinitions>
+
+            <!-- coluna principal: status, botão e gravações -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <ui:Card Grid.Row="0" Padding="22">
+                    <StackPanel>
+                        <Grid>
+                            <Border x:Name="Pill" HorizontalAlignment="Left" CornerRadius="12" Padding="10,4">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Tag" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Status.Tone}" Value="{x:Static rec:Tone.Live}">
+                                                <Setter Property="Tag" Value="{StaticResource RecRedBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status.Tone}" Value="{x:Static rec:Tone.Warn}">
+                                                <Setter Property="Tag" Value="{StaticResource WarnBrush}" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status.Tone}" Value="{x:Static rec:Tone.Ok}">
+                                                <Setter Property="Tag" Value="{StaticResource OkBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <Border.Background>
+                                    <SolidColorBrush Color="{Binding Tag.Color, ElementName=Pill}" Opacity="0.14" />
+                                </Border.Background>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="8" Height="8" Fill="{Binding Tag, ElementName=Pill}">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                                        <DataTrigger.EnterActions>
+                                                            <BeginStoryboard x:Name="Blink">
+                                                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                                     From="1" To="0.25" Duration="0:0:0.8" />
+                                                                </Storyboard>
+                                                            </BeginStoryboard>
+                                                        </DataTrigger.EnterActions>
+                                                        <DataTrigger.ExitActions>
+                                                            <StopStoryboard BeginStoryboardName="Blink" />
+                                                        </DataTrigger.ExitActions>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Margin="8,0,0,0" FontSize="12" FontWeight="SemiBold"
+                                               Text="{Binding Status.Headline}" Foreground="{Binding Tag, ElementName=Pill}" />
+                                </StackPanel>
+                            </Border>
+                            <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12.5"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding FpsText}" />
+                        </Grid>
+
+                        <TextBlock HorizontalAlignment="Center" Margin="0,6,0,0" FontSize="68" FontWeight="Bold"
+                                   Text="{Binding Elapsed}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="13.5"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding Status.Info}" />
+
+                        <Button Margin="0,16,0,0" Command="{Binding ToggleRecordingCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource RecordButton}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource SubtleSurfaceBrush}" />
+                                            <Setter Property="BorderBrush" Value="{StaticResource RecRedBrush}" />
+                                            <Setter Property="BorderThickness" Value="1.5" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource SubtleSurfaceBrush}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            <Setter Property="IsEnabled" Value="False" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon FontSize="20" Filled="True">
+                                    <ui:SymbolIcon.Style>
+                                        <Style TargetType="ui:SymbolIcon">
+                                            <Setter Property="Symbol" Value="Record24" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                                                    <Setter Property="Symbol" Value="Stop24" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:SymbolIcon.Style>
+                                </ui:SymbolIcon>
+                                <ui:ProgressRing Width="18" Height="18" IsIndeterminate="True"
+                                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                                <TextBlock Margin="12,0,0,0" Text="{Binding ButtonText}" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- explicação completa do erro/aviso, para copiar e mandar -->
+                        <Border Margin="0,16,0,0" Padding="12" CornerRadius="10" BorderThickness="1"
+                                BorderBrush="{StaticResource WarnBrush}" Background="{StaticResource SubtleSurfaceBrush}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Notice}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                                    <TextBox Text="{Binding Notice, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap"
+                                             BorderThickness="0" Background="Transparent" FontSize="13" />
+                                </ScrollViewer>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <ui:Button Content="{Binding CopyText}" Icon="{ui:SymbolIcon Copy24}"
+                                               Command="{Binding CopyErrorCommand}" />
+                                    <ui:Button Margin="8,0,0,0" Content="Abrir log" Icon="{ui:SymbolIcon DocumentText24}"
+                                               Command="{Binding OpenLogCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- medidores de nível -->
+                        <Grid Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="28" />
+                                <RowDefinition Height="28" />
+                            </Grid.RowDefinitions>
+                            <ui:SymbolIcon Grid.Row="0" Symbol="Speaker224" FontSize="16" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Margin="8,0" VerticalAlignment="Center" Text="Sistema"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ProgressBar Grid.Row="0" Grid.Column="2" Style="{StaticResource Meter}" Value="{Binding SystemMeter}" />
+                            <ui:SymbolIcon Grid.Row="1" Symbol="Mic24" FontSize="16" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Margin="8,0" VerticalAlignment="Center" Text="Microfone"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <ProgressBar Grid.Row="1" Grid.Column="2" Style="{StaticResource Meter}" Value="{Binding MicMeter}" />
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- gravações recentes -->
+                <ui:Card Grid.Row="2" Padding="18,14" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="VideoClip24" FontSize="16" />
+                                <TextBlock Style="{StaticResource SectionTitle}" Text="GRAVAÇÕES RECENTES" />
+                            </StackPanel>
+                            <ui:Button HorizontalAlignment="Right" Content="Abrir pasta" Icon="{ui:SymbolIcon FolderOpen24}"
+                                       Command="{Binding OpenFolderCommand}" />
+                        </Grid>
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Recordings.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+                                <ui:SymbolIcon Symbol="VideoClip24" FontSize="32" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                <TextBlock Margin="0,6,0,0" HorizontalAlignment="Center" Text="Nenhuma gravação ainda"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock HorizontalAlignment="Center" FontSize="12.5" Text="Escolha o que gravar e aperte F9"
+                                           Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding Recordings}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:RecordingItem}">
+                                            <Grid Margin="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ui:Button Grid.Column="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                                                           Appearance="Transparent" Padding="6" ToolTip="Abrir vídeo"
+                                                           Command="{Binding DataContext.OpenRecordingCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                           CommandParameter="{Binding}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Border Width="96" Height="54" CornerRadius="6" ClipToBounds="True"
+                                                                Background="{StaticResource SubtleSurfaceBrush}">
+                                                            <Grid>
+                                                                <ui:SymbolIcon Symbol="Play24" FontSize="18"
+                                                                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                                                <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" />
+                                                            </Grid>
+                                                        </Border>
+                                                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Margin="0,3,0,0" Text="{Binding Detail}" FontSize="12"
+                                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </ui:Button>
+                                                <ui:Button Grid.Column="1" Margin="6,0,0,0" Appearance="Transparent"
+                                                           Icon="{ui:SymbolIcon FolderOpen24}" ToolTip="Mostrar na pasta"
+                                                           Command="{Binding DataContext.ShowRecordingCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                           CommandParameter="{Binding}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </DockPanel>
+                </ui:Card>
+            </Grid>
+
+            <!-- configurações (travadas durante a gravação) -->
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel IsEnabled="{Binding IsIdle}">
+                    <ui:Card Padding="18,14">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Video24" FontSize="16" />
+                                <TextBlock Style="{StaticResource SectionTitle}" Text="O QUE GRAVAR" />
+                            </StackPanel>
+                            <Grid Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource}"
+                                          DropDownOpened="OnSourcesDropDownOpened">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SourceOption}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="{Binding Icon}" FontSize="16" />
+                                                <TextBlock Margin="8,0,0,0" Text="{Binding Label}" TextTrimming="CharacterEllipsis"
+                                                           MaxWidth="250" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <ui:Button Grid.Column="1" Margin="6,0,0,0" Icon="{ui:SymbolIcon ArrowClockwise24}"
+                                           ToolTip="Atualizar lista" Command="{Binding RefreshSourcesCommand}" />
+                            </Grid>
+                            <TextBlock Style="{StaticResource Hint}"
+                                       Text="Janelas são gravadas sem o que estiver por cima. No modo automático, o F9 grava a janela em foco; o botão grava o monitor principal." />
+
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Quadros por segundo" />
+                            <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding FrameRates}" SelectedItem="{Binding Fps}" />
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Resolução" />
+                            <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding Resolutions}" SelectedItem="{Binding Resolution}" />
+                            <TextBlock Style="{StaticResource FieldLabel}" Text="Qualidade" />
+                            <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding Qualities}" SelectedItem="{Binding Quality}" />
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Margin="0,12,0,0" Padding="18,14">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Speaker224" FontSize="16" />
+                                <TextBlock Style="{StaticResource SectionTitle}" Text="ÁUDIO" />
+                            </StackPanel>
+                            <ui:ToggleSwitch Margin="0,14,0,0" Content="Som do computador" IsChecked="{Binding SystemAudio}"
+                                             IsEnabled="{Binding HasOutput}" />
+                            <DockPanel Margin="0,8,0,0" IsEnabled="{Binding SystemAudio}">
+                                <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" VerticalAlignment="Center"
+                                           Text="{Binding SystemVolume, StringFormat={}{0:0}%}" />
+                                <Slider Minimum="0" Maximum="200" Value="{Binding SystemVolume}" VerticalAlignment="Center" />
+                            </DockPanel>
+
+                            <ui:ToggleSwitch Margin="0,16,0,0" Content="Microfone" IsChecked="{Binding Mic}" />
+                            <StackPanel IsEnabled="{Binding Mic}">
+                                <ComboBox Margin="0,8,0,0" ItemsSource="{Binding MicDevices}" SelectedItem="{Binding MicDevice}" />
+                                <DockPanel Margin="0,8,0,0">
+                                    <TextBlock DockPanel.Dock="Right" Width="44" TextAlignment="Right" VerticalAlignment="Center"
+                                               Text="{Binding MicVolume, StringFormat={}{0:0}%}" />
+                                    <Slider Minimum="0" Maximum="200" Value="{Binding MicVolume}" VerticalAlignment="Center" />
+                                </DockPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Margin="0,12,0,0" Padding="18,14">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Folder24" FontSize="16" />
+                                <TextBlock Style="{StaticResource SectionTitle}" Text="SAÍDA" />
+                            </StackPanel>
+                            <DockPanel Margin="0,12,0,0">
+                                <ui:Button DockPanel.Dock="Right" Margin="8,0,0,0" Content="Alterar" Command="{Binding ChooseFolderCommand}" />
+                                <TextBlock VerticalAlignment="Center" Text="{Binding OutputDir}" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding OutputDir}" />
+                            </DockPanel>
+                            <ui:ToggleSwitch Margin="0,14,0,0" Content="Minimizar o WinRec ao gravar" IsChecked="{Binding MinimizeOnRecord}" />
+                        </StackPanel>
+                    </ui:Card>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>
