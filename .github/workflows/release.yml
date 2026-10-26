@@ -63,8 +63,6 @@ jobs:
           generate_release_notes: true
           body: |
             **Instalar:** baixe o `WinRec-Setup.exe` abaixo e siga o assistente.
-
-            Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/). Veja a [política de assinatura](https://github.com/eebagabe/windows-rec#code-signing-policy).
           files: |
             dist/WinRec-Setup.exe
             publish/WinRec.exe

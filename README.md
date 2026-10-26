@@ -21,7 +21,7 @@ Gravador de tela para Windows: grava monitores, janelas e webcam, com áudio do 
 
 ## Instalação
 
-1. Baixe o **[WinRec-Setup.exe](https://github.com/eebagabe/windows-rec/releases/latest/download/WinRec-Setup.exe)** (página de [releases](https://github.com/eebagabe/windows-rec/releases)). Os executáveis são assinados digitalmente; veja a [política de assinatura](#code-signing-policy).
+1. Baixe o **[WinRec-Setup.exe](https://github.com/eebagabe/windows-rec/releases/latest/download/WinRec-Setup.exe)** (página de [releases](https://github.com/eebagabe/windows-rec/releases)).
 2. Abra e siga o assistente: escolha a pasta, se quer atalho na área de trabalho, e clique em **Instalar**.
 
 O instalador já traz o FFmpeg e tudo o que o app precisa (não é necessário instalar o .NET), cria os atalhos e coloca o WinRec em **Configurações > Aplicativos instalados** para desinstalar. Não precisa de administrador. Para atualizar, rode o instalador da versão nova.
@@ -87,20 +87,9 @@ O workflow `release` roda os testes e gera o instalador a cada push e pull reque
 
 Como a gravação funciona: o vídeo é capturado pelo FFmpeg (WGC, DXGI ou GDI, nessa ordem de preferência) direto para um MKV temporário, enquanto o áudio é gravado em WAV pelo WASAPI. Ao parar, o FFmpeg junta tudo num MP4, alinhando cada faixa de áudio pelo instante do primeiro quadro, sem recodificar o vídeo.
 
-## Code signing policy
+## Privacidade
 
-Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).
-
-Os executáveis publicados nas [releases](https://github.com/eebagabe/windows-rec/releases) (`WinRec.exe` e `WinRec-Setup.exe`) são compilados pelo GitHub Actions a partir deste repositório público e só são assinados nesse processo. O FFmpeg incluído no instalador é um programa de terceiros ([BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds)) e não é assinado por este projeto.
-
-**Team roles**
-
-- Committers and reviewers: [eebagabe](https://github.com/eebagabe)
-- Approvers: [eebagabe](https://github.com/eebagabe)
-
-**Privacy policy**
-
-This program will not transfer any information to other networking systems unless specifically requested by the user or the person installing or operating it. (O WinRec não coleta nem envia dados e não acessa a internet.)
+O WinRec não coleta nem envia dados e não acessa a internet.
 
 ## Licença
 
