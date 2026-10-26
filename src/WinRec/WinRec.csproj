@@ -19,6 +19,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="..\..\assets\icon.png" Link="Assets\icon.png" />
   </ItemGroup>
 
