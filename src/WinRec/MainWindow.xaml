@@ -334,8 +334,7 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <ComboBox ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource}"
-                                          DropDownOpened="OnSourcesDropDownOpened">
+                                <ComboBox ItemsSource="{Binding Sources}" SelectedItem="{Binding SelectedSource}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate DataType="{x:Type vm:SourceOption}">
                                             <StackPanel Orientation="Horizontal">

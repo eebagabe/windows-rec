@@ -15,7 +15,12 @@ public partial class MainWindow : FluentWindow
     {
         DataContext = _vm;
         InitializeComponent();
-        Activated += (_, _) => _vm.IsWindowActive = true;
+        Activated += (_, _) =>
+        {
+            _vm.IsWindowActive = true;
+            // ao voltar para o app, a lista de janelas abertas pode ter mudado
+            if (_vm.IsIdle) _vm.RefreshSources();
+        };
         Deactivated += (_, _) => _vm.IsWindowActive = false;
     }
 
@@ -37,6 +42,4 @@ public partial class MainWindow : FluentWindow
         _vm.Dispose();
         base.OnClosing(e);
     }
-
-    private void OnSourcesDropDownOpened(object? sender, EventArgs e) => _vm.RefreshSources();
 }
