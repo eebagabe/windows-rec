@@ -383,6 +383,23 @@
                                                Text="{Binding MicVolume, StringFormat={}{0:0}%}" />
                                     <Slider Minimum="0" Maximum="200" Value="{Binding MicVolume}" VerticalAlignment="Center" />
                                 </DockPanel>
+                                <DockPanel Margin="0,10,0,0">
+                                    <ui:Button DockPanel.Dock="Left" Icon="{ui:SymbolIcon Mic24}" Command="{Binding TestMicCommand}">
+                                        <ui:Button.Style>
+                                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                                <Setter Property="Content" Value="Testar microfone" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMicTesting}" Value="True">
+                                                        <Setter Property="Content" Value="Parar teste" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ui:Button.Style>
+                                    </ui:Button>
+                                    <ProgressBar Margin="10,0,0,0" Style="{StaticResource Meter}" Value="{Binding MicTestMeter}"
+                                                 Visibility="{Binding IsMicTesting, Converter={StaticResource BoolToVisibility}}" />
+                                </DockPanel>
+                                <TextBlock Style="{StaticResource Hint}" Text="{Binding MicTestStatus}" />
                             </StackPanel>
                         </StackPanel>
                     </ui:Card>

@@ -132,6 +132,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _micPeak = Decay(_micPeak, live && Status.MicActive ? _controller.MicLevel.Take() : 0);
         SystemMeter = _sysPeak;
         MicMeter = _micPeak;
+        if (IsMicTesting) MicTestMeter = Math.Max(_micTestLevel.Take(), MicTestMeter * 0.82);
         var elapsed = Status.StartedAt is { } t ? DateTime.UtcNow - t : TimeSpan.Zero;
         Elapsed = elapsed.ToString(@"hh\:mm\:ss");
         FpsText = live ? $"{_controller.Fps:0} fps" : "";
@@ -141,7 +142,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Só redesenha enquanto há algo mudando: parado, o app não gasta CPU.</summary>
     private void UpdateTick()
     {
-        var needed = !IsIdle || _sysPeak > 0.001 || _micPeak > 0.001;
+        var needed = !IsIdle || _sysPeak > 0.001 || _micPeak > 0.001 || IsMicTesting;
         if (!needed)
         {
             _tick.Stop();
@@ -244,6 +245,54 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (var m in mics) MicDevices.Add(m);
         if (mics.Count == 0) Mic = false;
         else if (!mics.Contains(MicDevice)) MicDevice = mics[0];
+    }
+
+    private readonly AudioLevel _micTestLevel = new();
+    private CancellationTokenSource? _micTest;
+
+    [ObservableProperty] private bool _isMicTesting;
+    [ObservableProperty] private double _micTestMeter;
+    [ObservableProperty] private string _micTestStatus = "Grava 5 segundos e toca de volta para você ouvir.";
+
+    /// <summary>Inicia o teste ou, se já estiver rodando, cancela.</summary>
+    [RelayCommand(AllowConcurrentExecutions = true)]
+    private async Task TestMicAsync()
+    {
+        if (_micTest is not null)
+        {
+            await _micTest.CancelAsync();
+            return;
+        }
+        _micTest = new CancellationTokenSource();
+        IsMicTesting = true;
+        UpdateTick();
+        var phase = new Progress<string>(s => MicTestStatus = s);
+        var (device, ct) = (MicDevice, _micTest.Token);
+        try
+        {
+            var peak = await Task.Run(() =>
+                MicTester.RecordAndPlayAsync(device, TimeSpan.FromSeconds(5), _micTestLevel, phase, ct), ct);
+            MicTestStatus = peak < 0.02
+                ? "Nenhum som captado. Confira se é o microfone certo e se o Windows permite o acesso "
+                  + "(Configurações > Privacidade > Microfone)."
+                : $"Microfone funcionando (pico de {peak:P0}).";
+        }
+        catch (OperationCanceledException)
+        {
+            MicTestStatus = "Teste cancelado.";
+        }
+        catch (Exception e)
+        {
+            Log.Write($"teste de microfone falhou: {e}");
+            MicTestStatus = $"O teste falhou: {e.Message}";
+        }
+        finally
+        {
+            _micTest.Dispose();
+            _micTest = null;
+            IsMicTesting = false;
+            MicTestMeter = 0;
+        }
     }
 
     // ------------------------------------------------------------------ saída
