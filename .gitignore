@@ -4,3 +4,8 @@
 bin/
 *.exe
 !/assets/*.ico
+[Bb]in/
+[Oo]bj/
+/publish/
+*.user
+.vs/

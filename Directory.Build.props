@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <Version>3.0.0</Version>
+    <Product>WinRec</Product>
+    <Authors>eebagabe</Authors>
+    <Copyright>Copyright (c) eebagabe</Copyright>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- permite compilar os projetos Windows (WPF) em Linux/macOS -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+</Project>

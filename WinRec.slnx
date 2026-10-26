@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WinRec.Core/WinRec.Core.csproj" />
+    <Project Path="src/WinRec/WinRec.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WinRec.Core.Tests/WinRec.Core.Tests.csproj" />
+  </Folder>
+</Solution>
