@@ -9,3 +9,4 @@ bin/
 /publish/
 *.user
 .vs/
+/installer/*.bmp

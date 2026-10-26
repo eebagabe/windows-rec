@@ -21,9 +21,9 @@ function New-Banner([double]$scale, [string]$out) {
     $fmt = New-Object System.Drawing.StringFormat; $fmt.Alignment = "Center"
     $title = New-Object System.Drawing.Font "Segoe UI Semibold", ([single](17 * $scale)), ([System.Drawing.GraphicsUnit]::Pixel)
     $sub = New-Object System.Drawing.Font "Segoe UI", ([single](11 * $scale)), ([System.Drawing.GraphicsUnit]::Pixel)
-    $g.DrawString("GameRec", $title, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, ($h * 0.22 + $s + 12 * $scale), $w, (30 * $scale)), $fmt)
+    $g.DrawString("WinRec", $title, [System.Drawing.Brushes]::White, (New-Object System.Drawing.RectangleF 0, ($h * 0.22 + $s + 12 * $scale), $w, (30 * $scale)), $fmt)
     $muted = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(139, 144, 160))
-    $g.DrawString("Gravador de gameplay", $sub, $muted, (New-Object System.Drawing.RectangleF 0, ($h * 0.22 + $s + 38 * $scale), $w, (20 * $scale)), $fmt)
+    $g.DrawString("Gravador de tela", $sub, $muted, (New-Object System.Drawing.RectangleF 0, ($h * 0.22 + $s + 38 * $scale), $w, (20 * $scale)), $fmt)
     $g.Dispose(); $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Bmp); $bmp.Dispose()
 }
 
