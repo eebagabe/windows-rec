@@ -313,7 +313,7 @@ public sealed class RecordingController : IDisposable
         {
             Directory.Delete(tmp, recursive: true);
         }
-        catch (IOException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             // pasta temporária fica para trás; não atrapalha
         }
@@ -357,7 +357,7 @@ public sealed class RecordingController : IDisposable
             {
                 Directory.Delete(s.Tmp, recursive: true);
             }
-            catch (IOException)
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
                 // arquivos brutos ficam; o MP4 já está salvo
             }

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace WinRec.Core;
 
@@ -28,8 +29,10 @@ public sealed record AppConfig
     public double MicVolume { get; set; } = 100;
     public bool MinimizeOnRecord { get; set; }
 
+    [JsonIgnore]
     public int Crf => Qualities.FirstOrDefault(q => q.Name == Quality) is { Name: not null } q ? q.Quality : 20;
 
+    [JsonIgnore]
     public int? MaxHeight => Resolutions.FirstOrDefault(r => r.Name == Resolution).MaxHeight;
 
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
