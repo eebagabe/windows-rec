@@ -30,4 +30,8 @@
     <ProjectReference Include="..\WinRec.Core\WinRec.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+  </ItemGroup>
+
 </Project>
